@@ -2,6 +2,7 @@ import streamlit as st
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.llms.openai import OpenAI
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 import os  # Make sure os is imported for file system operations
@@ -43,7 +44,17 @@ def main():
             vector_store = FAISS.from_texts(chunks, embedding=embeddings)
             vector_store.save_local(f"{store_name}")
             st.write("Embeddings computation completed.")
-            pass
+            
+
+        query = st.text_input("Ask a question about your pdf!")
+
+        if query: 
+            docs = vector_store.similarity_search(query=query, k=3)
+
+            llm = OpenAI()
+            chain = load_qa_chain(llm, chain_type='stuff')
+            response=chain.run(input_documents=docs, question=query)
+            st.write(response)
 
 
 if __name__ == '__main__':
